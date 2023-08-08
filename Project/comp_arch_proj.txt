@@ -1,0 +1,69 @@
+module adder(output reg[7:0] out, input[7:0] inp1, input[7:0] inp2);
+out=inp1+inp2;
+endmodule
+
+module register_field(output reg[31:0] out1, output reg[31:0] out2, input[4:0] address1, input[4:0] address2, input[4:0] writereg, input[31:0] writedata, input readEn, input writeEn, input clk);
+reg[4:0][31:0] regfile;
+always @ (posedge clk)
+begin
+	if(readEn)
+		begin
+		out1<=regfile[address1][31:0];
+		out2<=regfile[address2][31:0];
+		end
+end
+always @ (negedge clk)
+begin
+	if(writeEn)
+		regfile[writereg][31:0]<=writedate;
+end
+endmodule
+	 
+module processor(input clk, input rst);
+reg[7:0] PC;
+reg PC_control;
+reg[39:0] ifid;
+reg[108:0] idex;
+reg[2:0] alucon;
+reg mem_sig;
+reg alu_or_mem_op;
+reg[] memwb;
+reg readEninst, readEnrf, writeEnrf;
+reg meminit_inst, meminit_data;
+memory instn_memory (ifid[31:0], PC, 32'd0, clk, readEninst, 1'd0, meminit_inst)
+adder a1(ifid[39:32],PC,8'd4);
+register_field rf (idex[103:72], idex[71:40], ifid[25:21], ifid[20:16], memwb[], memwb[], readEnrf, writeEnrf, clk);
+memory data_memory(memwb[], <data-address>, exmem[], clk, readEndm, writeEndm, meminit_data);
+control_unit c1();
+always @ (posedge clk)
+begin
+	idex[39:0]<=ifid[39:0];
+	idex[106:104]<=alucon;
+	idex[107]<=mem_sig;
+	idex[108]<=alu_or_mem_op;
+	
+end
+endmodule	 
+
+module memory(output reg [31:0] memOut, input [7:0] address, input [31:0] dataIn, input clk, input readEnable, input writeEnable, input initializeMemory);
+reg [31:0] memory [0:199];
+integer i, f;
+
+always @ (posedge initializeMemory)
+	$readmemh("Input_Data.txt", memory);
+
+always @ (posedge clk)
+begin
+	if(readEnable)
+		begin
+		memOut <= memory[address];
+		//$display(memOut);
+		end
+	else if (writeEnable)
+		memory [address] <= dataIn;
+	else memOut <= 31'd0;
+end
+
+endmodule
+
+module control_unit(); 
